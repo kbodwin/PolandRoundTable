@@ -328,15 +328,7 @@ run_network_app <- function() {
 
                    h3("Choose metrics"),
 
-                   radioButtons('compute',
-                                'Compute:',
-                                choices = c(
-                                  "Static" = "static",
-                                  "On Fly" = "compute"
-                                )
-                   ),
-
-                   h4("CENTRALITY (or 'betweenness') is a measure of how important
+                   h4("BETWEENNESS (or centrality) is a measure of how important
                     the individual is to the connectedness of the network; in
                     essence, it measures how many other pairs of nodes are connected
                     through this individual."),
@@ -345,13 +337,22 @@ run_network_app <- function() {
                    h4("DEGREE refers to the total number of connections that an
                     individual has in the network"),
                    br(),
+                   
+                   h4("CROSS BETWEENNEESS is a custom measure which is similar to betweenness
+                      but instead is calculated using only Government-Opposition pairs."),
+                   br(),
+                   
+                   h4("CLUSTER-NORMALIZED CROSS BETWEENNEESS normalizes cross betweenness
+                      using the sizes of Louvain clusters being bridged; it emphasizes uniqueness
+                      and scales down arbitrary score increases due to an organization's size."),
+                   br(),
 
                    # h4("CROSS-GROUP DEGREE refers to the total number of connections
                    #     that an individual has to those in different  Round Table
                    #     affiliations."),
                    # br(),
 
-                   h4("NORMALIZED (or 'relative') measures take the chosen metric
+                   h4("STANDARDIZED (or 'relative') measures take the chosen metric
                    and subtract the overall average across all individuals in the
                    network, then divide by the standard deviation.  This gives
                    a measure of the importance of the individual relative to the
@@ -362,10 +363,12 @@ run_network_app <- function() {
                    radioButtons('metric',
                                 'Metric:',
                                 choices = c(
-                                  "Centrality" = "Centrality",
-                                  "Normalized Centrality" = "Centrality.Normalized",
+                                  "Betweenness" = "Centrality",
+                                  "Standardized Betweenness" = "Centrality.Normalized",
                                   "Degree" = "Degree",
-                                  "Normalized Degree" = "Degree.Normalized"#,
+                                  "Standardized Degree" = "Degree.Normalized",
+                                  "Cross Betweenness" = "CrossBetweenness",
+                                  "Cluster-Normalized Cross Betweenness" = "Cross.Betweenness.Norm"#,
                                   #"Cross-Group Degree" = "Cross.Degree",
                                   #"Normalized Cross-Group Degree" = "Normalized.Cross.Degree",
                                 )
@@ -406,29 +409,58 @@ run_network_app <- function() {
                                value = 1945,
                                min = 1945, max = 1989,
                                sep = ""),
-                   h3("End of Date Range"),
-                   selectInput('month_end_2',
-                               'Month',
-                               choices = 1:12
-                   ),
-                   selectInput('day_end_2',
-                               'Day',
-                               choices = 1:31
-                   ),
-                   sliderInput('year_end_2',
-                               'Year',
-                               value = 1989,
-                               min = 1945, max = 1989,
-                               sep = ""),
+                  h3("End of Date Range"),
+                  div(style="display: inline-block;vertical-align:top; width: 150px;",
+                      selectInput('month_end_2',
+                                  'Month',
+                                  choices = 1:12)
+                  ),
+                  div(style="display: inline-block;vertical-align:top; width: 150px;",
+                      selectInput('day_end_2',
+                                  'Day',
+                                  choices = 1:31)
+                  ),
+                  sliderInput('year_end_2',
+                              'Year',
+                              value = 1989,
+                              min = 1945, max = 1989,
+                              sep = ""),
 
                    h3("Choose which individuals to include"),
 
-                   pickerInput('person_lines',
-                               'Choose individuals:',
-                               choices = node_name_choices,
-                               options = list(`actions-box` = TRUE),
-                               multiple = TRUE
-                   ),
+                  # Search box with Select button
+                  div(
+                    style = "display: flex; gap: 10px; align-items: flex-start;",
+                    div(
+                      style = "flex-grow: 1;",
+                      textInput("member_search", "Search for an individual by name:")
+                    ),
+                    actionButton("confirm_search",
+                                 "Select",
+                                 class = "btn-secondary",
+                                 style = "height: 38px; margin-top: 25px;")
+                  ),
+                  
+                  # Dropdown with Clear button
+                  div(
+                    style = "display: flex; gap: 10px; align-items: flex-start;",
+                    div(
+                      style = "flex-grow: 1; min-width: 0;",
+                      pickerInput(
+                        'person_lines',
+                        'Selected individuals:',
+                        choices = node_name_choices,
+                        options = list(`actions-box` = TRUE),
+                        multiple = TRUE
+                      )
+                    ),
+                    actionButton(
+                      "clear_person_lines",
+                      "Clear",
+                      class = "btn-secondary",
+                      style = "height: 38px; white-space: nowrap; margin-top: 25px;"
+                    )
+                  ),
 
                    h3("Color by categories?"),
 
@@ -467,12 +499,50 @@ run_network_app <- function() {
 
 
                  ),
+                 
+                 # Plots, tables, and download buttons -- will be hidden if there isn't anything to display yet
                  mainPanel(
                    plotOutput('my_line_plot', width = "700px", height = "700px"),
-                   dataTableOutput('metric_df')
+                   conditionalPanel(
+                     condition = "input.make_line_plot > 0",
+                     downloadButton("download_plot", "Download Plot (PNG)")
+                   ),
+                   
+                   # Affiliation table and download
+                   conditionalPanel(
+                     condition = "output.affiliation_df_ready",
+                     h3("Institutional Affiliations"),
+                     dataTableOutput("affiliation_table"),
+                     downloadButton("download_affiliation_table", "Download Affiliations CSV")
+                   ),
+                   
+                   # Metric table and download
+                   conditionalPanel(
+                     condition = "output.metric_df_ready",
+                     div(
+                       h3("Metric Values Over Time"),
+                       checkboxInput("aggregate_metrics", "Aggregate over time", value = FALSE),
+                       checkboxInput("show_all_metrics", "Show all metrics", value = FALSE)
+                     ),
+                     dataTableOutput("metric_df"),
+                     downloadButton("download_metric_df", "Download Metric CSV")
+                   )
                  )
+                 
         ) #tabset
-      ) #tabpanel
+      ), #tabpanel
+    
+    # Pressing enter key will select entered member in search box
+    tags$script(HTML("
+      $(document).on('keypress', function(e) {
+        if (e.which == 13 && $('#member_search').is(':focus')) {
+          setTimeout(function() {
+            $('#confirm_search').click();
+          }, 150); // delay in ms allows input to register
+        }
+      });
+    "))
+
     ), #ui
     server = function(input, output, session) {
 
@@ -643,7 +713,6 @@ run_network_app <- function() {
 
 
       #### Set upnode appearance ####
-
 
       ## node_color_by_group: "None" or column name
       ## node_shape_by_group: "None" or column name
@@ -849,6 +918,64 @@ run_network_app <- function() {
       })
 
       ########### Panel 3: Line Plots ############
+      
+      
+      # To enable fuzzy matching when searching polish names
+      remove_accents <- function(x) {
+        iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT")
+      }
+
+      # To be used for saving plots and tables
+      get_filename <- function() {
+        # Only take the first n names to avoid file name length issues
+        name_num <- 10
+        names_vec <- metric_df() %>%
+          filter(!is.na(Selected.Metric)) %>%
+          pull(Full.Name) %>%
+          unique() %>%
+          na.omit() %>%
+          head(name_num)
+        names_ascii <- iconv(names_vec, from = "UTF-8", to = "ASCII//TRANSLIT")
+        names_safe <- names_ascii %>%
+          gsub("[^A-Za-z0-9]+", "_", .) %>%
+          paste(collapse = "_")
+        if (identical(names_safe, "")) names_safe <- "data"
+        paste0(names_safe, "_", input$metric, "_", first_date_2(), "_", last_date_2())
+      }
+
+      observeEvent(input$confirm_search, {
+        req(input$member_search)
+        
+        # Split search input into cleaned lowercase terms
+        search_terms <- strsplit(input$member_search, ",")[[1]] |>
+          trimws() |>
+          tolower() |>
+          remove_accents()
+        
+        matched_ids <- member_meta_info %>%
+          mutate(
+            FullName = tolower(remove_accents(paste(First.Middle.Name, Last.Name)))
+          ) %>%
+          filter(
+            Reduce(`|`, lapply(search_terms, function(term) grepl(term, FullName)))
+          ) %>%
+          pull(Member.ID)
+        
+        if (length(matched_ids) > 0) {
+          updatePickerInput(
+            session = session,
+            inputId = "person_lines",
+            selected = unique(c(input$person_lines, matched_ids))
+          )
+        }
+      })
+
+
+      ## Clear selected members -- tied to clear button
+      observeEvent(input$clear_person_lines, {
+        updatePickerInput(session, "person_lines", selected = character(0))
+      })
+
 
       #### Get Selected Dates ####
       first_date_2 <- reactive(get_date(input$year_start_2, input$month_start_2, input$day_start_2))
@@ -900,20 +1027,13 @@ run_network_app <- function() {
 
 
       metric_df <- reactive({
-        if (input$compute == "compute"){
-          dat <- all_metrics_df() %>%
-            filter(Member.ID %in% input$person_lines,
-                   Start.Date <= last_date_2(),
-                   End.Date >= first_date_2()) %>%
-            left_join(member_meta_info)
-        } else {
-          dat <- all_metrics_by_month %>%
-            filter(Member.ID %in% input$person_lines,
-                   Start.Date <= last_date_2(),
-                   End.Date >= first_date_2()) %>%
-            left_join(member_meta_info)
-        }
+        dat <- all_metrics_by_month %>%
+          filter(Member.ID %in% input$person_lines,
+                 Start.Date <= last_date_2(),
+                 End.Date >= first_date_2()) %>%
+          left_join(member_meta_info)
 
+        
 
         dat$Selected.Metric = dat[[input$metric]]
 
@@ -947,27 +1067,96 @@ run_network_app <- function() {
         #     }
         #}
 
+      # }) %>% bindEvent(input$make_line_plot)
+      })
+      
+      affiliation_df <- reactive({
+        affiliation_dates %>%
+          filter(
+            Member.ID %in% input$person_lines,
+            Start.Date <= last_date_2(),
+            End.Date >= first_date_2()
+          ) %>%
+          select(
+            Full.Name,
+            RT.Affiliation,
+            Organization.Name,
+            Start.Date,
+            End.Date
+          )
+      })
+      
+      output$affiliation_table <- renderDataTable({
+        affiliation_df()
       }) %>%
         bindEvent(input$make_line_plot)
-
+      
+      # Helper function for aggregating selected metric df
+      compute_avg_metric_df <- function(df, metric_label) {
+        df %>%
+          mutate(Year = format(as.Date(Start.Date), "%Y")) %>%
+          group_by(Full.Name, RT.Affiliation, Year) %>%
+          summarise(avg = mean(Selected.Metric, na.rm = TRUE), .groups = "drop") %>%
+          group_by(Full.Name, RT.Affiliation) %>%
+          summarise("{metric_label}" := mean(avg, na.rm = TRUE), .groups = "drop") %>%
+          arrange(desc(.data[[metric_label]]))
+      }
+  
+      # To be used when saving the metric_df
+      current_metric_table <- reactiveVal(NULL)
+      
       output$metric_df <- renderDataTable({
-        metric_df() %>%
-          dplyr::filter(!is.na(Selected.Metric)) %>%
-          select(Full.Name, input$metric, Start.Date, End.Date)
-      }) %>%
-        bindEvent(input$make_line_plot)
+        df <- metric_df()
+        result <- NULL
+        if (input$aggregate_metrics) {
+          if (input$show_all_metrics) {
+            metric_cols <- c("Centrality", "Degree", "Centrality.Normalized", 
+                             "Degree.Normalized", "CrossBetweenness", "Cross.Betweenness.Norm")
+            
+            all_results <- lapply(metric_cols, function(metric) {
+              tmp_df <- df %>%
+                filter(!is.na(.data[[metric]])) %>%
+                mutate(Selected.Metric = .data[[metric]])
+              
+              metric_label <- paste0("Overall_Avg_", metric)
+              compute_avg_metric_df(tmp_df, metric_label)
+            })
+            
+            result <- reduce(all_results, full_join, by = c("Full.Name", "RT.Affiliation"))
+          } else {
+            metric_label <- paste0("Overall_Avg_", input$metric)
+            result <- df %>%
+              filter(!is.na(.data[[input$metric]])) %>%
+              mutate(Selected.Metric = .data[[input$metric]]) %>%
+              compute_avg_metric_df(metric_label)
+          }
+        } else {
+          if (input$show_all_metrics) {
+            result <- df %>%
+              filter(!is.na(.data[[input$metric]])) %>%
+              select(Full.Name, RT.Affiliation,
+                     Centrality, Degree, Centrality.Normalized,
+                     Degree.Normalized, CrossBetweenness, Cross.Betweenness.Norm,
+                     Start.Date, End.Date
+              )
+          } else {
+            result <- df %>%
+              filter(!is.na(.data[[input$metric]])) %>%
+              select(Full.Name, RT.Affiliation, input$metric, Start.Date, End.Date)
+          }
+        }
+        current_metric_table(result)
+        result
+      })
 
-      output$my_line_plot <- renderPlot({
-
+      # output$my_line_plot <- renderPlot({
+      generate_plot <- function() {
         if (input$group_lines != "None") {
-
           p <- metric_df() %>%
             plot_metric(metric_col = Selected.Metric,
                         group_col = !!sym(input$group_lines)) +
             geom_line(linewidth = input$line_size)
-
         } else {
-
           p <- metric_df() %>%
             plot_metric(metric_col = Selected.Metric,
                         group_col = Full.Name) +
@@ -977,7 +1166,6 @@ run_network_app <- function() {
             p <- p + aes_string(color = input$color_lines_by_group,
                                 linetype = Full.Name)
           }
-
         }
 
         pretty_names <- c(
@@ -986,7 +1174,9 @@ run_network_app <- function() {
           "Degree" = "Total degree",
           "Degree.Normalized" = "Degree (normalized each month)",
           "Cross.Degree" = "Cross-group degree (based on RT affiliation)",
-          "Normalized.Cross.Degree" = "Cross-group degree (normalized each month)"
+          "Normalized.Cross.Degree" = "Cross-group degree (normalized each month)",
+          "CrossBetweenness" = "Cross betweenness (across factions)",
+          "Cross.Betweenness.Norm" = "Cluster-normalized cross betweenness (using Louvain clusters)"
         )
 
         len_range <- difftime(last_date_2(), first_date_2())/30
@@ -1013,10 +1203,87 @@ run_network_app <- function() {
           theme(
             axis.text.x = element_text(angle = 45, vjust = 1.2, hjust=1)
           )
+      }
+      
+      output$affiliation_table <- renderDataTable({
+        affiliation_df()
+      })
 
+      current_plot <- reactiveVal(NULL)
+      plot_filename_prefix <- reactiveVal("plot")
+      
+      output$my_line_plot <- renderPlot({
+        plot_obj <- generate_plot()
 
+        # Save selected options to be used as a filename if plot is saved
+        prefix <- get_filename()
+        plot_filename_prefix(prefix)
+
+        # save the current plot so that it may be tied to download plot button
+        current_plot(plot_obj)
+        plot_obj
       }) %>% bindEvent(input$make_line_plot)
 
+      # Controls visibility of the plot + download button
+      output$plot_ready <- reactive({
+        nrow(metric_df() %>% dplyr::filter(!is.na(Selected.Metric))) > 0
+      })
+      outputOptions(output, "plot_ready", suspendWhenHidden = FALSE)
+
+      
+      ### Download handlers
+      # Plot download
+      output$download_plot <- downloadHandler(
+        filename = function() {
+        paste0(plot_filename_prefix(), ".png")
+        },
+        content = function(file) {
+          ggsave(
+            filename = file,
+            plot = current_plot(),
+            width = 10,
+            height = 6,
+            dpi = 300,
+            bg = "white"
+          )
+        }
+      )
+      
+      # CSV download: metric_df
+      output$download_metric_df <- downloadHandler(
+        filename = function() {
+          suffix <- if (input$aggregate_metrics) {
+            if (input$show_all_metrics) "_aggregated_all" else "_aggregated"
+          } else {
+            ""
+          }
+          paste0(get_filename(), suffix, ".csv")
+        },
+        content = function(file) {
+          write.csv(current_metric_table(), file, row.names = FALSE)
+        }
+      )
+      
+      # CSV download: affiliation_df
+      output$download_affiliation_table <- downloadHandler(
+        filename = function() {
+          paste0(get_filename(), "_affiliations.csv")
+        },
+        content = function(file) {
+          write.csv(affiliation_df(), file, row.names = FALSE)
+        }
+      )
+
+      # Show/hide download buttons and tables only when data is available
+      output$affiliation_df_ready <- reactive({
+        nrow(affiliation_df()) > 0
+      })
+      outputOptions(output, "affiliation_df_ready", suspendWhenHidden = FALSE)
+
+      output$metric_df_ready <- reactive({
+        nrow(metric_df() %>% dplyr::filter(!is.na(Selected.Metric))) > 0
+      })
+      outputOptions(output, "metric_df_ready", suspendWhenHidden = FALSE)
 
     } #server
   ) #shinyapp
