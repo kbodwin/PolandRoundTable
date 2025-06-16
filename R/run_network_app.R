@@ -337,11 +337,11 @@ run_network_app <- function() {
                    h4("DEGREE refers to the total number of connections that an
                     individual has in the network"),
                    br(),
-                   
+
                    h4("CROSS BETWEENNEESS is a custom measure which is similar to betweenness
                       but instead is calculated using only Government-Opposition pairs."),
                    br(),
-                   
+
                    h4("CLUSTER SIZE-ADJUSTED CROSS BETWEENNEESS normalizes cross betweenness
                       using the sizes of Louvain clusters being bridged; it emphasizes uniqueness
                       and scales down arbitrary score increases due to an organization's size."),
@@ -440,7 +440,7 @@ run_network_app <- function() {
                                  class = "btn-secondary",
                                  style = "height: 38px; margin-top: 25px;")
                   ),
-                  
+
                   # Dropdown with Clear button
                   div(
                     style = "display: flex; gap: 10px; align-items: flex-start;",
@@ -499,7 +499,7 @@ run_network_app <- function() {
 
 
                  ),
-                 
+
                  # Plots, tables, and download buttons -- will be hidden if there isn't anything to display yet
                  mainPanel(
                    plotOutput('my_line_plot', width = "700px", height = "700px"),
@@ -507,7 +507,7 @@ run_network_app <- function() {
                      condition = "input.make_line_plot > 0",
                      downloadButton("download_plot", "Download Plot (PNG)")
                    ),
-                   
+
                    # Affiliation table and download
                    conditionalPanel(
                      condition = "output.affiliation_df_ready",
@@ -515,7 +515,7 @@ run_network_app <- function() {
                      dataTableOutput("affiliation_table"),
                      downloadButton("download_affiliation_table", "Download Affiliations CSV")
                    ),
-                   
+
                    # Metric table and download
                    conditionalPanel(
                      condition = "output.metric_df_ready",
@@ -528,10 +528,10 @@ run_network_app <- function() {
                      downloadButton("download_metric_df", "Download Metric CSV")
                    )
                  )
-                 
+
         ) #tabset
       ), #tabpanel
-    
+
     # Pressing enter key will select entered member in search box
     tags$script(HTML("
       $(document).on('keypress', function(e) {
@@ -918,8 +918,8 @@ run_network_app <- function() {
       })
 
       ########### Panel 3: Line Plots ############
-      
-      
+
+
       # To enable fuzzy matching when searching polish names
       remove_accents <- function(x) {
         iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT")
@@ -930,7 +930,7 @@ run_network_app <- function() {
         # Only take the first n names to avoid file name length issues
         name_num <- 10
         names_vec <- metric_df() %>%
-          filter(!is.na()) %>%
+          filter(!is.na(Selected.Metric)) %>%
           pull(Full.Name) %>%
           unique() %>%
           na.omit() %>%
@@ -945,13 +945,13 @@ run_network_app <- function() {
 
       observeEvent(input$confirm_search, {
         req(input$member_search)
-        
+
         # Split search input into cleaned lowercase terms
         search_terms <- strsplit(input$member_search, ",")[[1]] |>
           trimws() |>
           tolower() |>
           remove_accents()
-        
+
         matched_ids <- member_meta_info %>%
           mutate(
             FullName = tolower(remove_accents(paste(First.Middle.Name, Last.Name)))
@@ -960,7 +960,7 @@ run_network_app <- function() {
             Reduce(`|`, lapply(search_terms, function(term) grepl(term, FullName)))
           ) %>%
           pull(Member.ID)
-        
+
         if (length(matched_ids) > 0) {
           updatePickerInput(
             session = session,
@@ -1033,7 +1033,7 @@ run_network_app <- function() {
                  End.Date >= first_date_2()) %>%
           left_join(member_meta_info)
 
-        
+
 
         dat$Selected.Metric = dat[[input$metric]]
 
@@ -1069,7 +1069,7 @@ run_network_app <- function() {
 
       # }) %>% bindEvent(input$make_line_plot)
       })
-      
+
       affiliation_df <- reactive({
         affiliation_dates %>%
           filter(
@@ -1085,12 +1085,12 @@ run_network_app <- function() {
             End.Date
           )
       })
-      
+
       output$affiliation_table <- renderDataTable({
         affiliation_df()
       }) %>%
         bindEvent(input$make_line_plot)
-      
+
       # Helper function for aggregating selected metric df
       compute_avg_metric_df <- function(df, metric_label) {
         df %>%
@@ -1101,27 +1101,27 @@ run_network_app <- function() {
           summarise("{metric_label}" := mean(avg, na.rm = TRUE), .groups = "drop") %>%
           arrange(desc(.data[[metric_label]]))
       }
-  
+
       # To be used when saving the metric_df
       current_metric_table <- reactiveVal(NULL)
-      
+
       output$metric_df <- renderDataTable({
         df <- metric_df()
         result <- NULL
         if (input$aggregate_metrics) {
           if (input$show_all_metrics) {
-            metric_cols <- c("Centrality", "Degree", "Centrality.Normalized", 
+            metric_cols <- c("Centrality", "Degree", "Centrality.Normalized",
                              "Degree.Normalized", "Cross.Betweenness", "Cross.Betweenness.Adj")
-            
+
             all_results <- lapply(metric_cols, function(metric) {
               tmp_df <- df %>%
                 filter(!is.na(.data[[metric]])) %>%
                 mutate(Selected.Metric = .data[[metric]])
-              
+
               metric_label <- paste0("Overall_Avg_", metric)
               compute_avg_metric_df(tmp_df, metric_label)
             })
-            
+
             result <- reduce(all_results, full_join, by = c("Full.Name", "RT.Affiliation"))
           } else {
             metric_label <- paste0("Overall_Avg_", input$metric)
@@ -1204,14 +1204,14 @@ run_network_app <- function() {
             axis.text.x = element_text(angle = 45, vjust = 1.2, hjust=1)
           )
       }
-      
+
       output$affiliation_table <- renderDataTable({
         affiliation_df()
       })
 
       current_plot <- reactiveVal(NULL)
       plot_filename_prefix <- reactiveVal("plot")
-      
+
       output$my_line_plot <- renderPlot({
         plot_obj <- generate_plot()
 
@@ -1230,7 +1230,7 @@ run_network_app <- function() {
       })
       outputOptions(output, "plot_ready", suspendWhenHidden = FALSE)
 
-      
+
       ### Download handlers
       # Plot download
       output$download_plot <- downloadHandler(
@@ -1248,7 +1248,7 @@ run_network_app <- function() {
           )
         }
       )
-      
+
       # CSV download: metric_df
       output$download_metric_df <- downloadHandler(
         filename = function() {
@@ -1263,7 +1263,7 @@ run_network_app <- function() {
           write.csv(current_metric_table(), file, row.names = FALSE)
         }
       )
-      
+
       # CSV download: affiliation_df
       output$download_affiliation_table <- downloadHandler(
         filename = function() {

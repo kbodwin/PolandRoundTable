@@ -4,7 +4,7 @@
 #' @param affil_by which affiliation to get stats for
 #' @param start A start of date range, in YYYY-MM-DD string format.
 #' @param end An end of date range, in YYYY-MM-DD string format.
-#' @return
+#'
 #' @import dplyr readr
 #' @export
 get_cons_by_afil_orgs <- function(affils_by_date,
@@ -52,7 +52,7 @@ get_cons_by_afil_orgs <- function(affils_by_date,
 #' @param affil_by which affiliation to get stats for
 #' @param start A start of date range, in YYYY-MM-DD string format.
 #' @param end An end of date range, in YYYY-MM-DD string format.
-#' @return
+#'
 #' @import dplyr readr
 #' @export
 get_cons_by_afil_umb <- function(affils_by_date,
