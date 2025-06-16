@@ -342,7 +342,7 @@ run_network_app <- function() {
                       but instead is calculated using only Government-Opposition pairs."),
                    br(),
                    
-                   h4("CLUSTER-NORMALIZED CROSS BETWEENNEESS normalizes cross betweenness
+                   h4("CLUSTER SIZE-ADJUSTED CROSS BETWEENNEESS normalizes cross betweenness
                       using the sizes of Louvain clusters being bridged; it emphasizes uniqueness
                       and scales down arbitrary score increases due to an organization's size."),
                    br(),
@@ -367,8 +367,8 @@ run_network_app <- function() {
                                   "Standardized Betweenness" = "Centrality.Normalized",
                                   "Degree" = "Degree",
                                   "Standardized Degree" = "Degree.Normalized",
-                                  "Cross Betweenness" = "CrossBetweenness",
-                                  "Cluster-Normalized Cross Betweenness" = "Cross.Betweenness.Norm"#,
+                                  "Cross Betweenness" = "Cross.Betweenness",
+                                  "Cluster Size-Adjusted Cross Betweenness" = "Cross.Betweenness.Adj"#,
                                   #"Cross-Group Degree" = "Cross.Degree",
                                   #"Normalized Cross-Group Degree" = "Normalized.Cross.Degree",
                                 )
@@ -930,7 +930,7 @@ run_network_app <- function() {
         # Only take the first n names to avoid file name length issues
         name_num <- 10
         names_vec <- metric_df() %>%
-          filter(!is.na(Selected.Metric)) %>%
+          filter(!is.na()) %>%
           pull(Full.Name) %>%
           unique() %>%
           na.omit() %>%
@@ -1111,7 +1111,7 @@ run_network_app <- function() {
         if (input$aggregate_metrics) {
           if (input$show_all_metrics) {
             metric_cols <- c("Centrality", "Degree", "Centrality.Normalized", 
-                             "Degree.Normalized", "CrossBetweenness", "Cross.Betweenness.Norm")
+                             "Degree.Normalized", "Cross.Betweenness", "Cross.Betweenness.Adj")
             
             all_results <- lapply(metric_cols, function(metric) {
               tmp_df <- df %>%
@@ -1136,7 +1136,7 @@ run_network_app <- function() {
               filter(!is.na(.data[[input$metric]])) %>%
               select(Full.Name, RT.Affiliation,
                      Centrality, Degree, Centrality.Normalized,
-                     Degree.Normalized, CrossBetweenness, Cross.Betweenness.Norm,
+                     Degree.Normalized, Cross.Betweenness, Cross.Betweenness.Adj,
                      Start.Date, End.Date
               )
           } else {
@@ -1175,8 +1175,8 @@ run_network_app <- function() {
           "Degree.Normalized" = "Degree (normalized each month)",
           "Cross.Degree" = "Cross-group degree (based on RT affiliation)",
           "Normalized.Cross.Degree" = "Cross-group degree (normalized each month)",
-          "CrossBetweenness" = "Cross betweenness (across factions)",
-          "Cross.Betweenness.Norm" = "Cluster-normalized cross betweenness (using Louvain clusters)"
+          "Cross.Betweenness" = "Cross betweenness (across factions)",
+          "Cross.Betweenness.Adj" = "Cluster Size-Adjusted cross betweenness (using Louvain clusters)"
         )
 
         len_range <- difftime(last_date_2(), first_date_2())/30
