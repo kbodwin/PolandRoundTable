@@ -34,4 +34,5 @@ Imports:
     ggraph,
     ggiraph (>= 0.8.2),
     ggstar,
-    slider
+    slider,
+    DT

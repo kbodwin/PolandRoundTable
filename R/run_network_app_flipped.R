@@ -4,6 +4,7 @@
 #' @import devtools
 #' @import dplyr tidyr
 #' @import ggiraph
+#' @importFrom DT renderDT
 #' @export
 run_network_app_flipped <- function() {
 
@@ -538,7 +539,7 @@ run_network_app_flipped <- function() {
                          input$event_length)
       })
 
-      output$dataset <- renderDataTable(dat())
+      output$dataset <- renderDT(dat())
 
 
       #### Get Selected Dates ####
@@ -1071,7 +1072,7 @@ run_network_app_flipped <- function() {
           )
       })
 
-      output$selected_node_info <- renderDataTable({
+      output$selected_node_info <- renderDT({
 
         dat_limited() %>%
           filter(Org.ID %in% node_highlighted()) %>%
@@ -1123,7 +1124,7 @@ run_network_app_flipped <- function() {
         bindEvent(input$make_line_plot)
 
 
-      output$metric_df <- renderDataTable({
+      output$metric_df <- renderDT({
         metric_df() %>%
           dplyr::filter(!is.na(Selected.Metric)) %>%
           select(Org.ID, Organization.Name, input$metric, Start.Date, End.Date)

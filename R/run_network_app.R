@@ -4,6 +4,7 @@
 #' @import devtools
 #' @import dplyr tidyr
 #' @import ggiraph
+#' @importFrom DT renderDT
 #' @export
 run_network_app <- function() {
 
@@ -568,7 +569,7 @@ run_network_app <- function() {
                          input$event_length)
       })
 
-      output$dataset <- renderDataTable(dat())
+      output$dataset <- renderDT(dat())
 
 
       #### Get Selected Dates ####
@@ -908,7 +909,7 @@ run_network_app <- function() {
           )
       })
 
-      output$selected_node_info <- renderDataTable({
+      output$selected_node_info <- renderDT({
 
         dat_limited() %>%
           filter(Member.ID %in% node_highlighted()) %>%
@@ -1086,7 +1087,7 @@ run_network_app <- function() {
           )
       })
 
-      output$affiliation_table <- renderDataTable({
+      output$affiliation_table <- renderDT({
         affiliation_df()
       }) %>%
         bindEvent(input$make_line_plot)
@@ -1105,7 +1106,7 @@ run_network_app <- function() {
       # To be used when saving the metric_df
       current_metric_table <- reactiveVal(NULL)
 
-      output$metric_df <- renderDataTable({
+      output$metric_df <- renderDT({
         df <- metric_df()
         result <- NULL
         if (input$aggregate_metrics) {
@@ -1205,7 +1206,7 @@ run_network_app <- function() {
           )
       }
 
-      output$affiliation_table <- renderDataTable({
+      output$affiliation_table <- renderDT({
         affiliation_df()
       })
 
