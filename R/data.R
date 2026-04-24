@@ -42,3 +42,15 @@ NULL
 #' \item{\code{End.Date}}{The date the individual left the organization; either by de-affiliating, or because the event or institude ended.}
 #' }
 "affiliation_dates"
+
+#' All pre-calculated metrics
+#'
+#' Table all metrics calculated for each individual for each month
+#'
+#' @format A data frame with N variables:
+#' \describe{
+#' \item{\code{Member.ID}}{The ID number of the individual.}
+#' \item{\code{Start.Date}}{The date the individual first became involved with the organization.}
+#' \item{\code{End.Date}}{The date the individual left the organization; either by de-affiliating, or because the event or institude ended.}
+#' }
+"all_metrics_by_month"

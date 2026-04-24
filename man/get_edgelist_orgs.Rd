@@ -3,21 +3,40 @@
 \name{get_edgelist_orgs}
 \alias{get_edgelist_orgs}
 \title{Make an edgelist of organizations with member overlap in given date range
-This function should be updated to take a datset piped in, and to calcluate
+This function should be updated to take a dataset piped in, and to calculate
 edgeweight in the newer way.}
 \usage{
-get_edgelist_orgs(start, end = NULL)
+get_edgelist_orgs(
+  affils_by_date,
+  weight_by,
+  totals,
+  start,
+  end = NULL,
+  min_cons = 1,
+  custom = FALSE,
+  mass_weights = "No"
+)
 }
 \arguments{
+\item{affils_by_date}{Data frame of affiliations with start and end dates}
+
+\item{weight_by}{options for computing edgeweights}
+
+\item{totals}{data with total member stats for each org}
+
 \item{start}{A start of date range, in YYYY-MM-DD string format.}
 
 \item{end}{An end of date range, in YYYY-MM-DD string format.}
+
+\item{min_cons}{minimum connections needed to keep an edge}
+
+\item{custom}{T/F for if we are using Custom Mass Org option}
 }
 \value{
 A tibble with pairs of organizations and their number of shared members in that range.
 }
 \description{
 Make an edgelist of organizations with member overlap in given date range
-This function should be updated to take a datset piped in, and to calcluate
+This function should be updated to take a dataset piped in, and to calculate
 edgeweight in the newer way.
 }
