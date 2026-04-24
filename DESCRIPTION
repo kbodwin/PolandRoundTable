@@ -1,12 +1,13 @@
 Package: PolandRoundTable
 Title: Data and functions to support a network visualization Shiny app.
-Version: 0.1.0
-Authors@R: 
-    person(given = "Kelly",
-           family = "Bodwin",
-           role = c("aut", "cre"),
-           email = "kbodwin@calpoly.edu",
-           comment = c(ORCID = "0000-0003-3041-1786"))
+Version: 1.1.0
+Authors@R: c(
+    person("Kelly", "Bodwin", , "kbodwin@calpoly.edu", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-3041-1786")),
+    person("Kien", "Nguyen", role = "ctb"),
+    person("Jack", "Colt", role = "ctb"),
+    person("Chelsey", "Harper", role = "ctb")
+  )
 Description: This package is intended to supply necessary source code for users to run the primary Shiny app on their home machine.  Most functions are specific to structure the built-in datasets.
 License: MIT + file LICENSE
 Encoding: UTF-8
